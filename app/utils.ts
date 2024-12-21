@@ -262,6 +262,7 @@ export function isVisionModel(model: string) {
     "gemini-1.5",
     "gemini-exp",
     "gemini-2.0",
+    "gemini", 
     "learnlm",
     "qwen-vl",
     "qwen2-vl",
