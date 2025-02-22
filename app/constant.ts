@@ -216,7 +216,7 @@ export const Baidu = {
 
 export const ByteDance = {
   ExampleEndpoint: "https://ark.cn-beijing.volces.com/api/",
-  ChatPath: "api/v3/chat/completions",
+  ChatPath: "api/v3/bots/chat/completions",
 };
 
 export const Alibaba = {
