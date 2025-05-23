@@ -6,6 +6,9 @@ import { ZodError } from "zod";
 import { UserRole } from "@prisma/client";
 import { shouldAssignRootRole } from "@/app/lib/auth";
 
+// 确保路由动态渲染
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
