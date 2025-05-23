@@ -1,5 +1,14 @@
 {
     "github": {
         "silent": true
+    },
+    "buildCommand": "node scripts/build.js",
+    "outputDirectory": ".next",
+    "installCommand": "yarn install",
+    "env": {
+        "POSTGRES_PRISMA_URL": "POSTGRES_PRISMA_URL",
+        "POSTGRES_URL_NON_POOLING": "POSTGRES_URL_NON_POOLING",
+        "NEXTAUTH_SECRET": "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL": "NEXTAUTH_URL"
     }
 }
