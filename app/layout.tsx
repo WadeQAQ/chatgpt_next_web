@@ -7,6 +7,10 @@ import type { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleTagManager, GoogleAnalytics } from "@next/third-parties/google";
 import { getServerSideConfig } from "./config/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./lib/auth";
+import { Providers } from "./providers";
+import UserNav from "./components/user-nav";
 
 export const metadata: Metadata = {
   title: "NextChat",
@@ -27,12 +31,13 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const serverConfig = getServerSideConfig();
+  const session = await getServerSession(authOptions);
 
   return (
     <html lang="en">
@@ -50,22 +55,29 @@ export default function RootLayout({
         <script src="/serviceWorkerRegister.js" defer></script>
       </head>
       <body>
-        {children}
-        {serverConfig?.isVercel && (
-          <>
-            <SpeedInsights />
-          </>
-        )}
-        {serverConfig?.gtmId && (
-          <>
-            <GoogleTagManager gtmId={serverConfig.gtmId} />
-          </>
-        )}
-        {serverConfig?.gaId && (
-          <>
-            <GoogleAnalytics gaId={serverConfig.gaId} />
-          </>
-        )}
+        <Providers session={session}>
+          {/* 用户登录状态导航 */}
+          <div className="fixed top-2 right-2 z-50">
+            <UserNav />
+          </div>
+          
+          {children}
+          {serverConfig?.isVercel && (
+            <>
+              <SpeedInsights />
+            </>
+          )}
+          {serverConfig?.gtmId && (
+            <>
+              <GoogleTagManager gtmId={serverConfig.gtmId} />
+            </>
+          )}
+          {serverConfig?.gaId && (
+            <>
+              <GoogleAnalytics gaId={serverConfig.gaId} />
+            </>
+          )}
+        </Providers>
       </body>
     </html>
   );

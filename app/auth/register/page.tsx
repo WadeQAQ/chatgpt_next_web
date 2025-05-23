@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { registerSchema } from "@/app/lib/validation";
 import { ZodError } from "zod";
+import { UserRole } from "@prisma/client";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -15,6 +18,21 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // 检查用户权限
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+
+    // 如果已登录但不是ROOT用户，重定向到首页
+    if (status === "authenticated" && session?.user?.role !== UserRole.ROOT) {
+      router.push("/");
+      return;
+    }
+  }, [status, session, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,6 +45,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
@@ -45,36 +64,60 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "注册失败");
+        throw new Error(data.error || "创建用户失败");
       }
 
-      // 注册成功，跳转到登录页面
-      router.push("/auth/login?registered=true");
+      // 创建成功
+      setSuccess(`用户 ${formData.username} 创建成功`);
+      // 清空表单
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+      });
     } catch (error) {
       if (error instanceof ZodError) {
         setError(error.errors[0]?.message || "验证失败");
       } else if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError("注册时发生错误");
+        setError("创建用户时发生错误");
         console.error(error);
       }
+    } finally {
       setLoading(false);
     }
   };
+
+  // 加载中或未认证
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p>加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">注册</h1>
-          <p className="mt-2 text-gray-600">创建您的新账户</p>
+          <h1 className="text-3xl font-bold">创建新用户</h1>
+          <p className="mt-2 text-gray-600">管理员专用功能</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="p-3 bg-red-100 text-red-700 rounded-md">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-100 text-green-700 rounded-md">
+              {success}
             </div>
           )}
 
@@ -129,18 +172,15 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? "注册中..." : "注册"}
+              {loading ? "创建中..." : "创建用户"}
             </button>
           </div>
         </form>
 
         <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            已有账户？{" "}
-            <Link href="/auth/login" className="text-indigo-600 hover:text-indigo-500">
-              登录
-            </Link>
-          </p>
+          <Link href="/" className="text-indigo-600 hover:text-indigo-500">
+            返回首页
+          </Link>
         </div>
       </div>
     </div>

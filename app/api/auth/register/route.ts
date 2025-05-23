@@ -4,13 +4,23 @@ import { hashPassword } from "@/app/lib/password";
 import { registerSchema } from "@/app/lib/validation";
 import { ZodError } from "zod";
 import { UserRole } from "@prisma/client";
-import { shouldAssignRootRole } from "@/app/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions, isRoot } from "@/app/lib/auth";
 
 // 确保路由动态渲染
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    // 检查当前用户是否已登录且具有ROOT权限
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !isRoot(session)) {
+      return NextResponse.json(
+        { error: "权限不足，只有管理员可以创建用户" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = registerSchema.parse(body);
 
@@ -43,16 +53,13 @@ export async function POST(request: NextRequest) {
     // 密码哈希
     const hashedPassword = await hashPassword(validatedData.password);
     
-    // 检查是否应该将用户设为ROOT（第一个注册的用户）
-    const isRoot = await shouldAssignRootRole();
-
-    // 创建用户
+    // 创建用户 - 由管理员创建的用户默认为普通用户
     const user = await prisma.user.create({
       data: {
         username: validatedData.username,
         email: validatedData.email,
         password: hashedPassword,
-        role: isRoot ? UserRole.ROOT : UserRole.USER,
+        role: UserRole.USER, // 新用户默认为普通用户
       },
     });
 
@@ -61,7 +68,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         user: userWithoutPassword,
-        message: "用户注册成功" 
+        message: "用户创建成功" 
       }, 
       { status: 201 }
     );

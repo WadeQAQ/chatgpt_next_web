@@ -6,7 +6,7 @@
     "mask": "npx tsx app/masks/build.ts",
     "mask:watch": "npx watch \"yarn mask\" app/masks",
     "dev": "concurrently -r \"yarn run mask:watch\" \"next dev\"",
-    "build": "yarn mask && cross-env BUILD_MODE=standalone prisma generate && prisma migrate deploy && next build",
+    "build": "yarn mask && cross-env BUILD_MODE=standalone prisma generate && prisma migrate deploy && node scripts/init-root-user.js && next build",
     "start": "next start",
     "lint": "next lint",
     "export": "yarn mask && cross-env BUILD_MODE=export BUILD_APP=1 next build",
@@ -17,6 +17,7 @@
     "prompts": "node ./scripts/fetch-prompts.mjs",
     "prepare": "husky install",
     "postinstall": "prisma generate",
+    "init-root": "node scripts/init-root-user.js",
     "proxy-dev": "sh ./scripts/init-proxy.sh && proxychains -f ./scripts/proxychains.conf yarn dev",
     "test": "node --no-warnings --experimental-vm-modules $(yarn bin jest) --watch",
     "test:ci": "node --no-warnings --experimental-vm-modules $(yarn bin jest) --ci"
