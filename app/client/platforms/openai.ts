@@ -441,7 +441,11 @@ export class ChatGPTApi implements LLMApi {
     ]);
 
     if (used.status === 401) {
-      throw new Error(Locale.Error.Unauthorized);
+      // 不再抛出未授权错误，返回空的使用情况
+      return {
+        used: 0,
+        total: 0,
+      } as LLMUsage;
     }
 
     if (!used.ok || !subs.ok) {

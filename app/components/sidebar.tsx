@@ -179,9 +179,6 @@ export function SideBarHeader(props: {
   shouldNarrow?: boolean;
 }) {
   const { title, subTitle, logo, children, shouldNarrow } = props;
-  const { data: session } = useSession();
-  const username = session?.user?.username;
-  const isRoot = session?.user?.role === "ROOT";
 
   return (
     <Fragment>
@@ -194,13 +191,6 @@ export function SideBarHeader(props: {
         <div className={styles["sidebar-title-container"]}>
           <div className={styles["sidebar-title"]} data-tauri-drag-region>
             {title}
-            {username && (
-              <div className={clsx(styles["user-info"], "ml-2")} title={isRoot ? "管理员" : "普通用户"}>
-                <UserIcon />
-                <span className="ml-1 text-sm">{username}</span>
-                {isRoot && <span className="ml-1 text-xs text-purple-500">(ROOT)</span>}
-              </div>
-            )}
           </div>
           <div className={styles["sidebar-sub-title"]}>{subTitle}</div>
         </div>
