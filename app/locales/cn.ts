@@ -162,93 +162,6 @@ const cn = {
     SubTitle: "所有设置选项",
     ShowPassword: "显示密码",
 
-    Access: {
-      Provider: {
-        Title: "服务提供商",
-        SubTitle: "选择你的服务提供商",
-      },
-      OpenAI: {
-        ApiKey: {
-          Title: "API Key",
-          SubTitle: "使用自己的 Key 可绕过密码访问限制",
-          Placeholder: "OpenAI API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "除默认地址外，必须包含 http(s)://",
-        },
-      },
-      Google: {
-        ApiKey: {
-          Title: "API Key",
-          SubTitle: "使用自己的 Google AI API Key",
-          Placeholder: "Google AI API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "示例：",
-        },
-        ApiVersion: {
-          Title: "API 版本",
-          SubTitle: "选择API版本",
-        },
-        GoogleSafetySettings: {
-          Title: "安全设置",
-          SubTitle: "选择安全设置",
-        }
-      },
-      Azure: {
-        ApiKey: {
-          Title: "API Key",
-          SubTitle: "使用自己的 Azure API Key",
-          Placeholder: "Azure API Key",
-        },
-        Endpoint: {
-          Title: "接口地址",
-          SubTitle: "示例：",
-        },
-        ApiVerion: {
-          Title: "API 版本",
-          SubTitle: "选择API版本",
-        },
-      },
-      CustomEndpoint: {
-        Title: "自定义接口",
-        SubTitle: "使用自定义 API 接口",
-      },
-      SaasStart: {
-        Title: "零配置开箱即用",
-        SubTitle: "感受人工智能的魅力",
-        Label: " 🟢",
-        ChatNow: "立即体验",
-      },
-    },
-
-    User: {
-      Title: "用户账户",
-      Username: "用户名",
-      ChangePassword: "修改密码",
-      Logout: "退出登录",
-      Loading: "加载中...",
-      NotLogin: "未登录",
-      CurrentPassword: "当前密码",
-      NewPassword: "新密码",
-      ConfirmPassword: "确认新密码",
-      Submit: "更新密码",
-      Submitting: "更新中...",
-      Cancel: "取消",
-    },
-
-    HistoryCount: {
-      Title: "附带消息数",
-      SubTitle: "每次请求附带的历史消息数",
-    },
-    
-    CompressThreshold: {
-      Title: "历史消息压缩阈值",
-      SubTitle: "当未压缩的历史消息超过该值时，将进行压缩",
-    },
-
     Danger: {
       Reset: {
         Title: "重置所有设置",
@@ -350,6 +263,282 @@ const cn = {
       },
       ImportFailed: "导入失败",
     },
+    Mask: {
+      Splash: {
+        Title: "面具启动页",
+        SubTitle: "新建聊天时，展示面具启动页",
+      },
+      Builtin: {
+        Title: "隐藏内置面具",
+        SubTitle: "在所有面具列表中隐藏内置面具",
+      },
+    },
+    Prompt: {
+      Disable: {
+        Title: "禁用提示词自动补全",
+        SubTitle: "在输入框开头输入 / 即可触发自动补全",
+      },
+      List: "自定义提示词列表",
+      ListCount: (builtin: number, custom: number) =>
+        `内置 ${builtin} 条，用户定义 ${custom} 条`,
+      Edit: "编辑",
+      Modal: {
+        Title: "提示词列表",
+        Add: "新建",
+        Search: "搜索提示词",
+      },
+      EditModal: {
+        Title: "编辑提示词",
+      },
+    },
+    HistoryCount: {
+      Title: "附带历史消息数",
+      SubTitle: "每次请求携带的历史消息数",
+    },
+    CompressThreshold: {
+      Title: "历史消息长度压缩阈值",
+      SubTitle: "当未压缩的历史消息超过该值时，将进行压缩",
+    },
+
+    Usage: {
+      Title: "余额查询",
+      SubTitle(used: any, total: any) {
+        return `本月已使用 $${used}，订阅总额 $${total}`;
+      },
+      IsChecking: "正在检查…",
+      Check: "重新检查",
+      NoAccess: "输入 API Key 或访问密码查看余额",
+    },
+
+    Access: {
+      SaasStart: {
+        Title: "使用 NextChat AI",
+        Label: "（性价比最高的方案）",
+        SubTitle:
+          "由 NextChat 官方维护, 零配置开箱即用，支持 OpenAI o1, GPT-4o, Claude-3.5 等最新大模型",
+        ChatNow: "立刻对话",
+      },
+      AccessCode: {
+        Title: "访问密码",
+        SubTitle: "管理员已开启加密访问",
+        Placeholder: "请输入访问密码",
+      },
+      CustomEndpoint: {
+        Title: "自定义接口",
+        SubTitle: "是否使用自定义 Azure 或 OpenAI 服务",
+      },
+      Provider: {
+        Title: "模型服务商",
+        SubTitle: "切换不同的服务商",
+      },
+      OpenAI: {
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "使用自定义 OpenAI Key 绕过密码访问限制",
+          Placeholder: "OpenAI API Key",
+        },
+
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "除默认地址外，必须包含 http(s)://",
+        },
+      },
+      Azure: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 Azure Key 绕过密码访问限制",
+          Placeholder: "Azure API Key",
+        },
+
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+
+        ApiVerion: {
+          Title: "接口版本 (azure api version)",
+          SubTitle: "选择指定的部分版本",
+        },
+      },
+      Anthropic: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 Anthropic Key 绕过密码访问限制",
+          Placeholder: "Anthropic API Key",
+        },
+
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+
+        ApiVerion: {
+          Title: "接口版本 (claude api version)",
+          SubTitle: "选择一个特定的 API 版本输入",
+        },
+      },
+      Google: {
+        ApiKey: {
+          Title: "API 密钥",
+          SubTitle: "从 Google AI 获取您的 API 密钥",
+          Placeholder: "Google AI API KEY",
+        },
+
+        Endpoint: {
+          Title: "终端地址",
+          SubTitle: "示例：",
+        },
+
+        ApiVersion: {
+          Title: "API 版本（仅适用于 gemini-pro）",
+          SubTitle: "选择一个特定的 API 版本",
+        },
+        GoogleSafetySettings: {
+          Title: "Google 安全过滤级别",
+          SubTitle: "设置内容过滤级别",
+        },
+      },
+      Baidu: {
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "使用自定义 Baidu API Key",
+          Placeholder: "Baidu API Key",
+        },
+        SecretKey: {
+          Title: "Secret Key",
+          SubTitle: "使用自定义 Baidu Secret Key",
+          Placeholder: "Baidu Secret Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "不支持自定义前往.env配置",
+        },
+      },
+      Tencent: {
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "使用自定义腾讯云API Key",
+          Placeholder: "Tencent API Key",
+        },
+        SecretKey: {
+          Title: "Secret Key",
+          SubTitle: "使用自定义腾讯云Secret Key",
+          Placeholder: "Tencent Secret Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "不支持自定义前往.env配置",
+        },
+      },
+      ByteDance: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 ByteDance API Key",
+          Placeholder: "ByteDance API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      Alibaba: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义阿里云API Key",
+          Placeholder: "Alibaba Cloud API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      Moonshot: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义月之暗面API Key",
+          Placeholder: "Moonshot API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      DeepSeek: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义DeepSeek API Key",
+          Placeholder: "DeepSeek API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      XAI: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义XAI API Key",
+          Placeholder: "XAI API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      ChatGLM: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 ChatGLM API Key",
+          Placeholder: "ChatGLM API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      SiliconFlow: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义硅基流动 API Key",
+          Placeholder: "硅基流动 API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      Stability: {
+        ApiKey: {
+          Title: "接口密钥",
+          SubTitle: "使用自定义 Stability API Key",
+          Placeholder: "Stability API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      Iflytek: {
+        ApiKey: {
+          Title: "ApiKey",
+          SubTitle: "从讯飞星火控制台获取的 APIKey",
+          Placeholder: "APIKey",
+        },
+        ApiSecret: {
+          Title: "ApiSecret",
+          SubTitle: "从讯飞星火控制台获取的 APISecret",
+          Placeholder: "APISecret",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "样例：",
+        },
+      },
+      CustomModel: {
+        Title: "自定义模型名",
+        SubTitle: "增加自定义模型可选项，使用英文逗号隔开",
+      },
+    },
 
     Model: "模型 (model)",
     CompressModel: {
@@ -392,8 +581,8 @@ const cn = {
         SubTitle: "生成语音时使用的声音",
       },
       Speed: {
-        Title: "速度",
-        SubTitle: "生成语音的速度",
+        Title: "语速",
+        SubTitle: "语音播放速度",
       },
     },
     Realtime: {
@@ -429,6 +618,11 @@ const cn = {
         SubTitle: "值越大，回复越随机",
       },
     },
+    User: {
+      Title: "用户设置",
+      SubTitle: "管理您的账户信息和密码",
+      Manage: "管理账户",
+    },
   },
   Store: {
     DefaultTopic: "新的聊天",
@@ -437,7 +631,7 @@ const cn = {
     Prompt: {
       History: (content: string) => "这是历史聊天总结作为前情提要：" + content,
       Topic:
-        '使用四到五个字直接返回这句话的简要主题，不要解释、不要标点、不要语气词、不要多余文本，不要加粗，如果没有主题，请直接返回"闲聊"',
+        "使用四到五个字直接返回这句话的简要主题，不要解释、不要标点、不要语气词、不要多余文本，不要加粗，如果没有主题，请直接返回"闲聊"",
       Summarize:
         "简要总结一下对话内容，用作后续的上下文提示 prompt，控制在 200 字以内",
     },

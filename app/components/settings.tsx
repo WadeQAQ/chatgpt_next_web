@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { signOut, useSession } from "next-auth/react";
 
 import styles from "./settings.module.scss";
 
@@ -89,6 +88,8 @@ import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
 import { RealtimeConfigList } from "./realtime-chat/realtime-config";
+import { UserRole } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -581,179 +582,27 @@ function SyncItems() {
   );
 }
 
-// 用户设置组件
-function UserSettingsSection() {
+function UserSettingsItem() {
   const { data: session, status } = useSession();
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const [passwordLoading, setPasswordLoading] = useState(false);
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // 重置状态
-    setPasswordError(null);
-    setPasswordSuccess(null);
-    setPasswordLoading(true);
-    
-    // 验证新密码
-    if (newPassword.length < 8) {
-      setPasswordError("新密码至少需要8个字符");
-      setPasswordLoading(false);
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setPasswordError("两次输入的密码不一致");
-      setPasswordLoading(false);
-      return;
-    }
-    
-    try {
-      // 发送密码更新请求
-      const response = await fetch(`/api/users/${session?.user?.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword,
-          password: newPassword,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || "修改密码失败");
-      }
-      
-      // 成功后清空表单并显示成功消息
-      setPasswordSuccess("密码修改成功");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      
-      // 3秒后隐藏密码修改表单
-      setTimeout(() => {
-        setShowPasswordChange(false);
-        setPasswordSuccess(null);
-      }, 3000);
-      
-    } catch (error) {
-      if (error instanceof Error) {
-        setPasswordError(error.message);
-      } else {
-        setPasswordError("修改密码时发生错误");
-      }
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: "/auth/login" });
-  };
-
-  if (status === "loading") {
-    return <div className={styles["loading"]}>加载中...</div>;
+  const navigate = useNavigate();
+  
+  if (status !== "authenticated") {
+    return null;
   }
-
-  if (status === "unauthenticated") {
-    return <div className={styles["not-login"]}>未登录</div>;
-  }
-
+  
   return (
     <List>
-      <ListItem title="用户账户">
-        <div className={styles["user-settings-container"]}>
-          <div className={styles["username"]}>
-            {session?.user?.username || "用户"}
-          </div>
-          <div className={styles["user-actions"]}>
-            {showPasswordChange ? (
-              <div className={styles["password-change-form"]}>
-                <form onSubmit={handlePasswordChange}>
-                  {passwordError && (
-                    <div className={styles["password-error"]}>{passwordError}</div>
-                  )}
-                  
-                  {passwordSuccess && (
-                    <div className={styles["password-success"]}>{passwordSuccess}</div>
-                  )}
-                  
-                  <div>
-                    <input
-                      id="currentPassword"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      required
-                      className={styles["password-input"]}
-                      placeholder="当前密码"
-                    />
-                  </div>
-                  
-                  <div>
-                    <input
-                      id="newPassword"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      className={styles["password-input"]}
-                      placeholder="新密码"
-                    />
-                  </div>
-                  
-                  <div>
-                    <input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className={styles["password-input"]}
-                      placeholder="确认新密码"
-                    />
-                  </div>
-                  
-                  <div className={styles["button-container"]}>
-                    <IconButton
-                      onClick={() => {}}
-                      text={passwordLoading ? "更新中..." : "更新密码"}
-                      type="primary"
-                    />
-                    
-                    <IconButton
-                      onClick={() => setShowPasswordChange(false)}
-                      text="取消"
-                      type="normal"
-                    />
-                  </div>
-                </form>
-              </div>
-            ) : (
-              <>
-                <IconButton
-                  icon={<EditIcon />}
-                  text="修改密码"
-                  onClick={() => setShowPasswordChange(true)}
-                />
-                
-                <IconButton
-                  icon={<CloseIcon />}
-                  text="退出登录"
-                  onClick={handleLogout}
-                />
-              </>
-            )}
-          </div>
-        </div>
+      <ListItem
+        title={Locale.Settings.User.Title}
+        subTitle={Locale.Settings.User.SubTitle}
+      >
+        <IconButton
+          icon={<EditIcon />}
+          text={Locale.Settings.User.Manage}
+          onClick={() => {
+            navigate("/settings");
+          }}
+        />
       </ListItem>
     </List>
   );
@@ -2089,9 +1938,9 @@ export function Settings() {
           />
         </List>
 
-        <DangerItems />
+        <UserSettingsItem />
 
-        <UserSettingsSection />
+        <DangerItems />
       </div>
     </ErrorBoundary>
   );
