@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,8 +11,26 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberUsername, setRememberUsername] = useState(false);
+  const [rememberPassword, setRememberPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // 页面加载时，检查是否有存储的用户名和密码
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    
+    if (savedUsername) {
+      setUsername(savedUsername);
+      setRememberUsername(true);
+    }
+    
+    if (savedPassword) {
+      setPassword(savedPassword);
+      setRememberPassword(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +40,19 @@ export default function LoginPage() {
     try {
       // 验证输入
       loginSchema.parse({ username, password });
+
+      // 保存用户名和密码（如果选择了记住）
+      if (rememberUsername) {
+        localStorage.setItem("rememberedUsername", username);
+      } else {
+        localStorage.removeItem("rememberedUsername");
+      }
+      
+      if (rememberPassword) {
+        localStorage.setItem("rememberedPassword", password);
+      } else {
+        localStorage.removeItem("rememberedPassword");
+      }
 
       // 登录
       const result = await signIn("credentials", {
@@ -93,6 +124,36 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center">
+              <input
+                id="remember-username"
+                name="remember-username"
+                type="checkbox"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                checked={rememberUsername}
+                onChange={(e) => setRememberUsername(e.target.checked)}
+              />
+              <label htmlFor="remember-username" className="ml-2 block text-sm text-gray-700">
+                记住账户
+              </label>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                id="remember-password"
+                name="remember-password"
+                type="checkbox"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                checked={rememberPassword}
+                onChange={(e) => setRememberPassword(e.target.checked)}
+              />
+              <label htmlFor="remember-password" className="ml-2 block text-sm text-gray-700">
+                记住密码
+              </label>
+            </div>
           </div>
 
           <div>
