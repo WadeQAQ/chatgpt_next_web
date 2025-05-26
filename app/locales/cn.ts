@@ -162,6 +162,68 @@ const cn = {
     SubTitle: "所有设置选项",
     ShowPassword: "显示密码",
 
+    Access: {
+      Provider: {
+        Title: "服务提供商",
+        SubTitle: "选择你的服务提供商",
+      },
+      OpenAI: {
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "使用自己的 Key 可绕过密码访问限制",
+          Placeholder: "OpenAI API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "除默认地址外，必须包含 http(s)://",
+        },
+      },
+      Google: {
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "使用自己的 Google AI API Key",
+          Placeholder: "Google AI API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "示例：",
+        },
+        ApiVersion: {
+          Title: "API 版本",
+          SubTitle: "选择API版本",
+        },
+        GoogleSafetySettings: {
+          Title: "安全设置",
+          SubTitle: "选择安全设置",
+        }
+      },
+      Azure: {
+        ApiKey: {
+          Title: "API Key",
+          SubTitle: "使用自己的 Azure API Key",
+          Placeholder: "Azure API Key",
+        },
+        Endpoint: {
+          Title: "接口地址",
+          SubTitle: "示例：",
+        },
+        ApiVerion: {
+          Title: "API 版本",
+          SubTitle: "选择API版本",
+        },
+      },
+      CustomEndpoint: {
+        Title: "自定义接口",
+        SubTitle: "使用自定义 API 接口",
+      },
+      SaasStart: {
+        Title: "零配置开箱即用",
+        SubTitle: "感受人工智能的魅力",
+        Label: " 🟢",
+        ChatNow: "立即体验",
+      },
+    },
+
     User: {
       Title: "用户账户",
       Username: "用户名",
