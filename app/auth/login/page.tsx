@@ -11,20 +11,21 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [rememberUsername, setRememberUsername] = useState(false);
   const [rememberPassword, setRememberPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // 页面加载时，从localStorage读取记住的用户名和密码
+  // 从本地存储中加载记住的用户名和密码
   useEffect(() => {
     const savedUsername = localStorage.getItem("rememberedUsername");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    
     if (savedUsername) {
       setUsername(savedUsername);
       setRememberUsername(true);
     }
-
-    const savedPassword = localStorage.getItem("rememberedPassword");
+    
     if (savedPassword) {
       setPassword(savedPassword);
       setRememberPassword(true);
@@ -40,13 +41,13 @@ export default function LoginPage() {
       // 验证输入
       loginSchema.parse({ username, password });
 
-      // 处理记住账户和密码的逻辑
+      // 保存记住的用户名和密码
       if (rememberUsername) {
         localStorage.setItem("rememberedUsername", username);
       } else {
         localStorage.removeItem("rememberedUsername");
       }
-
+      
       if (rememberPassword) {
         localStorage.setItem("rememberedPassword", password);
       } else {

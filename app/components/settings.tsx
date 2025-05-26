@@ -88,8 +88,6 @@ import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
 import { RealtimeConfigList } from "./realtime-chat/realtime-config";
-import { UserRole } from "@prisma/client";
-import { useSession } from "next-auth/react";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -579,32 +577,6 @@ function SyncItems() {
         <SyncConfigModal onClose={() => setShowSyncConfigModal(false)} />
       )}
     </>
-  );
-}
-
-function UserSettingsItem() {
-  const { data: session, status } = useSession();
-  const navigate = useNavigate();
-  
-  if (status !== "authenticated") {
-    return null;
-  }
-  
-  return (
-    <List>
-      <ListItem
-        title={Locale.Settings.User.Title}
-        subTitle={Locale.Settings.User.SubTitle}
-      >
-        <IconButton
-          icon={<EditIcon />}
-          text={Locale.Settings.User.Manage}
-          onClick={() => {
-            navigate("/settings");
-          }}
-        />
-      </ListItem>
-    </List>
   );
 }
 
@@ -1937,8 +1909,6 @@ export function Settings() {
             }}
           />
         </List>
-
-        <UserSettingsItem />
 
         <DangerItems />
       </div>

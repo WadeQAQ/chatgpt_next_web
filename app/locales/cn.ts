@@ -581,8 +581,8 @@ const cn = {
         SubTitle: "生成语音时使用的声音",
       },
       Speed: {
-        Title: "语速",
-        SubTitle: "语音播放速度",
+        Title: "速度",
+        SubTitle: "生成语音的速度",
       },
     },
     Realtime: {
@@ -618,11 +618,6 @@ const cn = {
         SubTitle: "值越大，回复越随机",
       },
     },
-    User: {
-      Title: "用户设置",
-      SubTitle: "管理您的账户信息和密码",
-      Manage: "管理账户",
-    },
   },
   Store: {
     DefaultTopic: "新的聊天",
@@ -631,7 +626,7 @@ const cn = {
     Prompt: {
       History: (content: string) => "这是历史聊天总结作为前情提要：" + content,
       Topic:
-        "使用四到五个字直接返回这句话的简要主题，不要解释、不要标点、不要语气词、不要多余文本，不要加粗，如果没有主题，请直接返回\"闲聊\"",
+        "使用四到五个字直接返回这句话的简要主题，不要解释、不要标点、不要语气词、不要多余文本，不要加粗，如果没有主题，请直接返回“闲聊”",
       Summarize:
         "简要总结一下对话内容，用作后续的上下文提示 prompt，控制在 200 字以内",
     },

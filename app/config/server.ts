@@ -13,7 +13,7 @@ declare global {
       BASE_URL?: string;
       OPENAI_ORG_ID?: string; // openai only
 
-      VERCEL?: "1" | undefined;
+      VERCEL?: string;
       BUILD_MODE?: "standalone" | "export";
       BUILD_APP?: string; // is building desktop app
 

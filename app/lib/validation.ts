@@ -1,26 +1,57 @@
 import { z } from "zod";
 
-// 用户注册验证规则
+// 登录表单验证
+export const loginSchema = z.object({
+  username: z.string().min(1, "用户名不能为空"),
+  password: z.string().min(1, "密码不能为空"),
+});
+
+// 注册表单验证
 export const registerSchema = z.object({
   username: z
     .string()
-    .min(3, { message: "用户名至少需要3个字符" })
-    .max(20, { message: "用户名不能超过20个字符" })
-    .regex(/^[a-zA-Z0-9_]+$/, { message: "用户名只能包含字母、数字和下划线" }),
+    .min(3, "用户名至少需要3个字符")
+    .max(20, "用户名不能超过20个字符")
+    .regex(/^[a-zA-Z0-9_-]+$/, "用户名只能包含字母、数字、下划线和连字符"),
   email: z
     .string()
-    .email({ message: "请输入有效的电子邮件地址" })
-    .optional(),
+    .email("请输入有效的电子邮箱地址")
+    .optional()
+    .nullable(),
   password: z
     .string()
-    .min(8, { message: "密码至少需要8个字符" })
-    .max(100, { message: "密码太长" })
+    .min(8, "密码至少需要8个字符")
+    .max(100, "密码不能超过100个字符"),
 });
 
-// 用户登录验证规则
-export const loginSchema = z.object({
-  username: z.string().min(1, { message: "请输入用户名" }),
-  password: z.string().min(1, { message: "请输入密码" })
+// 更新用户验证
+export const updateUserSchema = z.object({
+  username: z
+    .string()
+    .min(3, "用户名至少需要3个字符")
+    .max(20, "用户名不能超过20个字符")
+    .regex(/^[a-zA-Z0-9_-]+$/, "用户名只能包含字母、数字、下划线和连字符")
+    .optional(),
+  email: z
+    .string()
+    .email("请输入有效的电子邮箱地址")
+    .optional()
+    .nullable(),
+  password: z
+    .string()
+    .min(8, "密码至少需要8个字符")
+    .max(100, "密码不能超过100个字符")
+    .optional(),
+  currentPassword: z
+    .string()
+    .min(1, "当前密码不能为空")
+    .optional(),
+});
+
+// 更新用户设置验证
+export const updateSettingsSchema = z.object({
+  theme: z.enum(["light", "dark", "auto"]).optional(),
+  language: z.string().optional(),
 });
 
 // API密钥验证规则

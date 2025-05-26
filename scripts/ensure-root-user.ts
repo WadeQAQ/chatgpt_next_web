@@ -1,6 +1,5 @@
-// 初始化root用户脚本，确保系统中存在一个root管理员账户
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+import { PrismaClient, UserRole } from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -18,21 +17,20 @@ async function main() {
   }
   
   // 创建root用户
-  const hashedPassword = await bcrypt.hash('zU85bsu/cxI0293', 12);
+  const hashedPassword = await hash('778425Ni', 10);
   
   await prisma.user.create({
     data: {
       username: 'root',
       password: hashedPassword,
       email: 'root@example.com',
-      role: 'ROOT'
+      role: UserRole.ROOT
     }
   });
   
   console.log('root用户创建成功');
 }
 
-// 执行初始化
 main()
   .catch((e) => {
     console.error('创建root用户时出错:', e);

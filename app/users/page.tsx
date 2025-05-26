@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { UserRole } from "@prisma/client";
+import { generatePassword } from "@/app/lib/password";
 
 interface User {
   id: string;
@@ -12,9 +13,6 @@ interface User {
   role: UserRole;
   createdAt: string;
   updatedAt: string;
-  _count: {
-    apiKeys: number;
-  };
 }
 
 export default function UsersPage() {
@@ -23,212 +21,402 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  
+  // 新用户表单状态
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState(generatePassword(12));
+  const [isAdding, setIsAdding] = useState(false);
+  const [addFormVisible, setAddFormVisible] = useState(false);
+  
+  // 编辑用户状态
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<UserRole>(UserRole.USER);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    // 如果未登录，重定向到登录页面
     if (status === "unauthenticated") {
       router.push("/auth/login");
       return;
     }
 
-    // 只有认证状态明确后才加载数据
     if (status === "authenticated") {
+      // 检查用户是否是ROOT
+      if (session?.user?.role !== UserRole.ROOT) {
+        router.push("/");
+        return;
+      }
+      
       fetchUsers();
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/users");
       
-      if (response.status === 403) {
-        // 如果是权限问题，重定向到首页
-        router.push("/");
-        return;
-      }
-      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "获取用户列表失败");
+        throw new Error("获取用户列表失败");
       }
       
       const data = await response.json();
       setUsers(data);
-      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "获取用户列表时出错");
-      console.error("获取用户列表错误:", err);
+      setError(err instanceof Error ? err.message : "获取用户列表失败");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAdding(true);
+    
+    try {
+      const response = await fetch("/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: newUsername,
+          email: newEmail || undefined,
+          password: newPassword,
+          role: UserRole.USER,
+        }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "创建用户失败");
+      }
+      
+      // 重新获取用户列表
+      await fetchUsers();
+      
+      // 重置表单
+      setNewUsername("");
+      setNewEmail("");
+      setNewPassword(generatePassword(12));
+      setAddFormVisible(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "创建用户失败");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editUserId) return;
+    
+    setIsEditing(true);
+    
+    try {
+      const response = await fetch(`/api/users/${editUserId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: editUsername,
+          email: editEmail || undefined,
+          role: editRole,
+        }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "更新用户失败");
+      }
+      
+      // 重新获取用户列表
+      await fetchUsers();
+      
+      // 重置编辑状态
+      setEditUserId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "更新用户失败");
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("确定要删除此用户吗？此操作不可逆。")) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "删除用户失败");
+      }
+      
+      // 重新获取用户列表
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "删除用户失败");
+    }
+  };
+
+  const startEditUser = (user: User) => {
+    setEditUserId(user.id);
+    setEditUsername(user.username);
+    setEditEmail(user.email || "");
+    setEditRole(user.role);
+  };
+
+  const resetPassword = async (userId: string) => {
+    const newPassword = generatePassword(12);
+    
+    if (!confirm(`确定要重置该用户的密码吗？新密码将是: ${newPassword}`)) {
+      return;
+    }
+    
     try {
       const response = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({
+          password: newPassword,
+        }),
       });
-
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "更新用户角色失败");
+        const data = await response.json();
+        throw new Error(data.error || "重置密码失败");
       }
-
-      // 更新本地用户列表
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
+      
+      alert(`密码已成功重置为: ${newPassword}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "更新用户角色时出错");
-      console.error("更新用户角色错误:", err);
+      setError(err instanceof Error ? err.message : "重置密码失败");
     }
   };
 
-  const confirmDelete = (userId: string) => {
-    setDeleteUserId(userId);
-  };
-
-  const cancelDelete = () => {
-    setDeleteUserId(null);
-  };
-
-  const handleDelete = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "删除用户失败");
-      }
-
-      // 从本地用户列表中移除
-      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
-      setDeleteUserId(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "删除用户时出错");
-      console.error("删除用户错误:", err);
-    }
-  };
-
-  if (status === "loading" || loading) {
+  if (loading && users.length === 0) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">用户管理</h1>
-        <div className="text-center py-8">加载中...</div>
+        <p>加载中...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">用户管理</h1>
       
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
           {error}
         </div>
       )}
-
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      
+      <div className="mb-6">
+        <button
+          onClick={() => setAddFormVisible(!addFormVisible)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          {addFormVisible ? "取消添加" : "添加用户"}
+        </button>
+        
+        <a href="/settings" className="ml-4 text-indigo-600 hover:text-indigo-800">
+          返回设置
+        </a>
+      </div>
+      
+      {/* 添加用户表单 */}
+      {addFormVisible && (
+        <div className="mb-8 p-4 border rounded-md bg-gray-50">
+          <h2 className="text-xl font-semibold mb-4">添加新用户</h2>
+          
+          <form onSubmit={handleAddUser} className="space-y-4">
+            <div>
+              <label htmlFor="newUsername" className="block text-sm font-medium text-gray-700">
+                用户名 *
+              </label>
+              <input
+                id="newUsername"
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                required
+                className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700">
+                电子邮箱 (可选)
+              </label>
+              <input
+                id="newEmail"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                密码 *
+              </label>
+              <div className="flex">
+                <input
+                  id="newPassword"
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  className="flex-1 px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                />
+                <button
+                  type="button"
+                  onClick={() => setNewPassword(generatePassword(12))}
+                  className="ml-2 px-3 py-2 mt-1 bg-gray-200 rounded-md"
+                >
+                  生成
+                </button>
+              </div>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={isAdding}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+            >
+              {isAdding ? "添加中..." : "添加用户"}
+            </button>
+          </form>
+        </div>
+      )}
+      
+      {/* 用户列表 */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border rounded-md">
+          <thead className="bg-gray-100">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                用户名
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                邮箱
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                角色
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                创建时间
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                操作
-              </th>
+              <th className="py-2 px-4 text-left border-b">用户名</th>
+              <th className="py-2 px-4 text-left border-b">邮箱</th>
+              <th className="py-2 px-4 text-left border-b">角色</th>
+              <th className="py-2 px-4 text-left border-b">创建时间</th>
+              <th className="py-2 px-4 text-left border-b">操作</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody>
             {users.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {user.username}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.email || "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    user.role === "ROOT" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
-                  }`}>
-                    {user.role === "ROOT" ? "管理员" : "普通用户"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  {/* 只有当前用户不是ROOT时，才显示切换角色按钮 */}
-                  {session?.user?.id !== user.id && (
-                    <button
-                      onClick={() => handleRoleChange(user.id, user.role === "ROOT" ? "USER" : "ROOT")}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
-                      {user.role === "ROOT" ? "降为普通用户" : "设为管理员"}
-                    </button>
-                  )}
-                  
-                  {/* 只能删除非自己的用户 */}
-                  {session?.user?.id !== user.id && (
-                    <>
-                      {deleteUserId === user.id ? (
-                        <div className="inline-flex space-x-2">
-                          <button
-                            onClick={() => handleDelete(user.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            确认删除
-                          </button>
-                          <button
-                            onClick={cancelDelete}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            取消
-                          </button>
+                {editUserId === user.id ? (
+                  // 编辑状态
+                  <td colSpan={5} className="py-2 px-4 border-b">
+                    <form onSubmit={handleEditUser} className="space-y-4">
+                      <div className="flex space-x-4">
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700">用户名</label>
+                          <input
+                            type="text"
+                            value={editUsername}
+                            onChange={(e) => setEditUsername(e.target.value)}
+                            required
+                            className="w-full px-3 py-1 border border-gray-300 rounded-md"
+                          />
                         </div>
-                      ) : (
+                        
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700">邮箱</label>
+                          <input
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="w-full px-3 py-1 border border-gray-300 rounded-md"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">角色</label>
+                          <select
+                            value={editRole}
+                            onChange={(e) => setEditRole(e.target.value as UserRole)}
+                            className="w-full px-3 py-1 border border-gray-300 rounded-md"
+                          >
+                            <option value={UserRole.USER}>普通用户</option>
+                            <option value={UserRole.ROOT}>ROOT</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2">
                         <button
-                          onClick={() => confirmDelete(user.id)}
-                          className="text-red-600 hover:text-red-900 ml-4"
+                          type="submit"
+                          disabled={isEditing}
+                          className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
                         >
-                          删除
+                          {isEditing ? "保存中..." : "保存"}
                         </button>
-                      )}
-                    </>
-                  )}
-                </td>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setEditUserId(null)}
+                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </form>
+                  </td>
+                ) : (
+                  // 查看状态
+                  <>
+                    <td className="py-2 px-4 border-b">{user.username}</td>
+                    <td className="py-2 px-4 border-b">{user.email || "-"}</td>
+                    <td className="py-2 px-4 border-b">
+                      {user.role === UserRole.ROOT ? "ROOT" : "普通用户"}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      {new Date(user.createdAt).toLocaleString()}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEditUser(user)}
+                          className="px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                        >
+                          编辑
+                        </button>
+                        
+                        <button
+                          onClick={() => resetPassword(user.id)}
+                          className="px-2 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700"
+                        >
+                          重置密码
+                        </button>
+                        
+                        {session?.user?.id !== user.id && (
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="px-2 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                          >
+                            删除
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
-
-            {users.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                  没有找到用户
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
