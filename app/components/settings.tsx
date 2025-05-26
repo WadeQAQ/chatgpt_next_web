@@ -3,6 +3,7 @@ import { useSession, signOut } from "next-auth/react";
 import { UserRole } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { UserSettings } from "./user-settings";
+import { generatePassword } from "@/app/lib/password";
 
 import styles from "./settings.module.scss";
 
@@ -584,54 +585,444 @@ function SyncItems() {
   );
 }
 
-function UserManagementItems() {
-  const { data: session } = useSession();
+function UserManagement() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const isRoot = session?.user?.role === UserRole.ROOT;
   
-  if (!session?.user) {
-    return null;
-  }
+  // 用户列表状态
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 新用户表单状态
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState(generatePassword(12));
+  const [isAdding, setIsAdding] = useState(false);
+  const [addFormVisible, setAddFormVisible] = useState(false);
+  
+  // 编辑用户状态
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<UserRole>(UserRole.USER);
+  const [isEditing, setIsEditing] = useState(false);
 
-  return (
-    <>
-      <ListItem title="账户信息">
-        <UserSettings />
-      </ListItem>
+  useEffect(() => {
+    if (isRoot) {
+      fetchUsers();
+    }
+  }, [isRoot]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/users");
       
-      {isRoot && (
-        <ListItem title="用户管理">
-          <div className={styles["settings-item"]}>
-            <div className={styles["settings-title"]}>用户管理</div>
-            <div className={styles["settings-description"]}>
-              管理系统用户账户、权限以及密码
-            </div>
-            <button 
-              className={styles["settings-button"]} 
-              onClick={() => router.push("/users")}
-            >
-              管理用户
-            </button>
-          </div>
-        </ListItem>
-      )}
+      if (!response.ok) {
+        throw new Error("获取用户列表失败");
+      }
+      
+      const data = await response.json();
+      setUsers(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "获取用户列表失败");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      <ListItem title="退出登录">
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAdding(true);
+    
+    try {
+      const response = await fetch("/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: newUsername,
+          email: newEmail || undefined,
+          password: newPassword,
+          role: UserRole.USER,
+        }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "创建用户失败");
+      }
+      
+      // 重新获取用户列表
+      await fetchUsers();
+      
+      // 重置表单
+      setNewUsername("");
+      setNewEmail("");
+      setNewPassword(generatePassword(12));
+      setAddFormVisible(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "创建用户失败");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editUserId) return;
+    
+    setIsEditing(true);
+    
+    try {
+      const response = await fetch(`/api/users/${editUserId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: editUsername,
+          email: editEmail || undefined,
+          role: editRole,
+        }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "更新用户失败");
+      }
+      
+      // 重新获取用户列表
+      await fetchUsers();
+      
+      // 重置编辑状态
+      setEditUserId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "更新用户失败");
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("确定要删除此用户吗？此操作不可逆。")) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "删除用户失败");
+      }
+      
+      // 重新获取用户列表
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "删除用户失败");
+    }
+  };
+
+  const startEditUser = (user: any) => {
+    setEditUserId(user.id);
+    setEditUsername(user.username);
+    setEditEmail(user.email || "");
+    setEditRole(user.role);
+  };
+
+  const resetPassword = async (userId: string) => {
+    const newPassword = generatePassword(12);
+    
+    if (!confirm(`确定要重置该用户的密码吗？新密码将是: ${newPassword}`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: newPassword,
+        }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "重置密码失败");
+      }
+      
+      alert(`密码已成功重置为: ${newPassword}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "重置密码失败");
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/auth/login" });
+  };
+
+  // 普通用户只显示基本设置
+  if (!isRoot) {
+    return (
+      <>
+        <div className={styles["settings-item"]}>
+          <UserSettings />
+        </div>
+        
         <div className={styles["settings-item"]}>
           <div className={styles["settings-title"]}>退出登录</div>
-          <div className={styles["settings-description"]}>
-            退出当前账号并返回登录页面
-          </div>
+          <div className={styles["settings-description"]}>退出当前账号并返回登录页面</div>
           <button 
             className={styles["settings-button"]}
-            onClick={async () => {
-              await signOut({ callbackUrl: "/auth/login" });
-            }}
+            onClick={handleLogout}
           >
             退出登录
           </button>
         </div>
-      </ListItem>
+      </>
+    );
+  }
+
+  // ROOT用户显示完整的用户管理功能
+  return (
+    <>
+      <div className={styles["settings-item"]}>
+        <UserSettings />
+      </div>
+      
+      <div className={styles["settings-item"]}>
+        <div className={styles["settings-title"]}>退出登录</div>
+        <div className={styles["settings-description"]}>退出当前账号并返回登录页面</div>
+        <button 
+          className={styles["settings-button"]}
+          onClick={handleLogout}
+        >
+          退出登录
+        </button>
+      </div>
+      
+      <div className={styles["settings-item"]}>
+        <div className={styles["settings-title"]}>用户管理</div>
+        <div className={styles["settings-description"]}>管理系统用户账户、权限以及密码</div>
+        
+        {error && (
+          <div className={styles["settings-error"]}>
+            {error}
+          </div>
+        )}
+        
+        <div className={styles["settings-actions"]}>
+          <button
+            onClick={() => setAddFormVisible(!addFormVisible)}
+            className={styles["settings-button"]}
+          >
+            {addFormVisible ? "取消添加" : "添加用户"}
+          </button>
+        </div>
+        
+        {/* 添加用户表单 */}
+        {addFormVisible && (
+          <div className={styles["settings-form"]}>
+            <h3 className={styles["settings-subtitle"]}>添加新用户</h3>
+            
+            <form onSubmit={handleAddUser} className={styles["settings-form-content"]}>
+              <div className={styles["settings-form-item"]}>
+                <label className={styles["settings-label"]}>用户名 *</label>
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  required
+                  className={styles["settings-input"]}
+                />
+              </div>
+              
+              <div className={styles["settings-form-item"]}>
+                <label className={styles["settings-label"]}>电子邮箱 (可选)</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className={styles["settings-input"]}
+                />
+              </div>
+              
+              <div className={styles["settings-form-item"]}>
+                <label className={styles["settings-label"]}>密码 *</label>
+                <div className={styles["settings-input-group"]}>
+                  <input
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className={styles["settings-input"]}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNewPassword(generatePassword(12))}
+                    className={styles["settings-button-secondary"]}
+                  >
+                    生成
+                  </button>
+                </div>
+              </div>
+              
+              <div className={styles["settings-form-actions"]}>
+                <button
+                  type="submit"
+                  disabled={isAdding}
+                  className={styles["settings-button"]}
+                >
+                  {isAdding ? "添加中..." : "添加用户"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+        
+        {/* 用户列表 */}
+        {loading ? (
+          <div className={styles["settings-loading"]}>加载中...</div>
+        ) : (
+          <div className={styles["settings-table-container"]}>
+            <table className={styles["settings-table"]}>
+              <thead>
+                <tr>
+                  <th>用户名</th>
+                  <th>邮箱</th>
+                  <th>角色</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    {editUserId === user.id ? (
+                      <td colSpan={5}>
+                        <form onSubmit={handleEditUser} className={styles["settings-form-inline"]}>
+                          <div className={styles["settings-form-row"]}>
+                            <div className={styles["settings-form-col"]}>
+                              <label>用户名</label>
+                              <input
+                                type="text"
+                                value={editUsername}
+                                onChange={(e) => setEditUsername(e.target.value)}
+                                required
+                              />
+                            </div>
+                            
+                            <div className={styles["settings-form-col"]}>
+                              <label>邮箱</label>
+                              <input
+                                type="email"
+                                value={editEmail}
+                                onChange={(e) => setEditEmail(e.target.value)}
+                              />
+                            </div>
+                            
+                            <div className={styles["settings-form-col"]}>
+                              <label>角色</label>
+                              <select
+                                value={editRole}
+                                onChange={(e) => setEditRole(e.target.value as UserRole)}
+                              >
+                                <option value={UserRole.USER}>普通用户</option>
+                                <option value={UserRole.ROOT}>ROOT</option>
+                              </select>
+                            </div>
+                          </div>
+                          
+                          <div className={styles["settings-form-actions"]}>
+                            <button
+                              type="submit"
+                              disabled={isEditing}
+                            >
+                              {isEditing ? "保存中..." : "保存"}
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={() => setEditUserId(null)}
+                              className={styles["settings-button-secondary"]}
+                            >
+                              取消
+                            </button>
+                          </div>
+                        </form>
+                      </td>
+                    ) : (
+                      <>
+                        <td>{user.username}</td>
+                        <td>{user.email || "-"}</td>
+                        <td>
+                          <span className={user.role === UserRole.ROOT ? styles["settings-tag-root"] : styles["settings-tag-user"]}>
+                            {user.role === UserRole.ROOT ? "ROOT" : "普通用户"}
+                          </span>
+                        </td>
+                        <td>{new Date(user.createdAt).toLocaleString()}</td>
+                        <td>
+                          <div className={styles["settings-table-actions"]}>
+                            <button
+                              onClick={() => startEditUser(user)}
+                              className={styles["settings-button-small"]}
+                            >
+                              编辑
+                            </button>
+                            
+                            <button
+                              onClick={() => resetPassword(user.id)}
+                              className={styles["settings-button-small"]}
+                            >
+                              重置密码
+                            </button>
+                            
+                            {session?.user?.id !== user.id && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                className={styles["settings-button-danger"]}
+                              >
+                                删除
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+                
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan={5}>没有找到用户</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function UserManagementItems() {
+  return (
+    <>
+      <List>
+        <ListItem title="账户管理">
+          <UserManagement />
+        </ListItem>
+      </List>
     </>
   );
 }
@@ -1542,8 +1933,8 @@ export function Settings() {
       </div>
       <div className={styles["settings"]}>
         <List>
-          <ListItem title="用户管理">
-            <UserManagementItems />
+          <ListItem title="账户管理">
+            <UserManagement />
           </ListItem>
 
           <ListItem title={Locale.Settings.Avatar}>
