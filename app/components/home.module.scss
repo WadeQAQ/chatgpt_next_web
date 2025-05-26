@@ -157,7 +157,29 @@
 .sidebar-title {
   font-size: 20px;
   font-weight: bold;
-  animation: slide-in ease 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--black);
+  opacity: 0.8;
+  margin-left: 8px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .sidebar-sub-title {

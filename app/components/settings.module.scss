@@ -78,3 +78,37 @@
     overflow:visible ;
   }
 }
+
+.settings-button {
+  padding: 8px 12px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.settings-title {
+  font-size: 1em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.settings-description {
+  font-size: 0.9em;
+  color: var(--black-50);
+  margin-bottom: 10px;
+}
+
+.settings-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.02);
+}

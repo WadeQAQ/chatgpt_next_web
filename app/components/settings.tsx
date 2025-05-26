@@ -1,4 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { UserRole } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { UserSettings } from "./user-settings";
 
 import styles from "./settings.module.scss";
 
@@ -580,11 +584,65 @@ function SyncItems() {
   );
 }
 
+function UserManagementItems() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const isRoot = session?.user?.role === UserRole.ROOT;
+  
+  if (!session?.user) {
+    return null;
+  }
+
+  return (
+    <>
+      <ListItem title="账户信息">
+        <UserSettings />
+      </ListItem>
+      
+      {isRoot && (
+        <ListItem title="用户管理">
+          <div className={styles["settings-item"]}>
+            <div className={styles["settings-title"]}>用户管理</div>
+            <div className={styles["settings-description"]}>
+              管理系统用户账户、权限以及密码
+            </div>
+            <button 
+              className={styles["settings-button"]} 
+              onClick={() => router.push("/users")}
+            >
+              管理用户
+            </button>
+          </div>
+        </ListItem>
+      )}
+
+      <ListItem title="退出登录">
+        <div className={styles["settings-item"]}>
+          <div className={styles["settings-title"]}>退出登录</div>
+          <div className={styles["settings-description"]}>
+            退出当前账号并返回登录页面
+          </div>
+          <button 
+            className={styles["settings-button"]}
+            onClick={async () => {
+              await signOut({ callbackUrl: "/auth/login" });
+            }}
+          >
+            退出登录
+          </button>
+        </div>
+      </ListItem>
+    </>
+  );
+}
+
 export function Settings() {
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const config = useAppConfig();
   const updateConfig = config.update;
+  const resetConfig = config.reset;
+  const [clearAllData, setClearAllData] = useState(false);
 
   const updateStore = useUpdateStore();
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -1484,6 +1542,10 @@ export function Settings() {
       </div>
       <div className={styles["settings"]}>
         <List>
+          <ListItem title="用户管理">
+            <UserManagementItems />
+          </ListItem>
+
           <ListItem title={Locale.Settings.Avatar}>
             <Popover
               onClose={() => setShowEmojiPicker(false)}
