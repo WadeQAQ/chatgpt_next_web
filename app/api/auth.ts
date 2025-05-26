@@ -39,7 +39,17 @@ export function auth(req: NextRequest, modelProvider: ModelProvider) {
   console.log("[User IP] ", getIP(req));
   console.log("[Time] ", new Date().toLocaleString());
 
-  if (serverConfig.needCode && !serverConfig.codes.has(hashedCode) && !apiKey) {
+  // 检查用户是否已登录（通过检查session cookie）
+  const sessionCookie = req.cookies.get("next-auth.session-token") || 
+                        req.cookies.get("__Secure-next-auth.session-token");
+  const isAuthenticated = !!sessionCookie;
+  
+  console.log("[Auth] User authenticated:", isAuthenticated);
+
+  // 如果用户已登录，则跳过访问码验证
+  if (isAuthenticated) {
+    console.log("[Auth] User is authenticated, skipping access code check");
+  } else if (serverConfig.needCode && !serverConfig.codes.has(hashedCode) && !apiKey) {
     return {
       error: true,
       msg: !accessCode ? "empty access code" : "wrong access code",
