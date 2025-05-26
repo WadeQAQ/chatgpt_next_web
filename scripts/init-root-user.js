@@ -7,29 +7,33 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('正在检查root用户...');
   
+  // 从环境变量获取root用户名和密码
+  const rootUsername = process.env.ROOT_USERNAME || 'root';
+  const rootPassword = process.env.ROOT_PASSWORD || 'z38U5/a28bb';
+  
   // 检查root用户是否存在
   const rootUser = await prisma.user.findUnique({
-    where: { username: 'root' }
+    where: { username: rootUsername }
   });
   
   if (rootUser) {
-    console.log('root用户已存在');
+    console.log(`${rootUsername}用户已存在`);
     return;
   }
   
   // 创建root用户
-  const hashedPassword = await bcrypt.hash('zU85bsu/cxI0293', 12);
+  const hashedPassword = await bcrypt.hash(rootPassword, 12);
   
   await prisma.user.create({
     data: {
-      username: 'root',
+      username: rootUsername,
       password: hashedPassword,
-      email: 'root@example.com',
+      email: `${rootUsername}@example.com`,
       role: 'ROOT'
     }
   });
   
-  console.log('root用户创建成功');
+  console.log(`${rootUsername}用户创建成功`);
 }
 
 // 执行初始化

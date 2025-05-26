@@ -166,15 +166,6 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            还没有账户？{" "}
-            <Link href="/auth/register" className="text-indigo-600 hover:text-indigo-500">
-              注册
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

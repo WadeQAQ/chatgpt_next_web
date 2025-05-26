@@ -27,6 +27,10 @@ try {
   try {
     console.log('应用数据库迁移...');
     execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    
+    // 初始化root用户
+    console.log('初始化root用户...');
+    execSync('node scripts/init-root-user.js', { stdio: 'inherit' });
   } catch (migrateError) {
     console.error('迁移失败，但将继续构建过程:', migrateError.message);
   }

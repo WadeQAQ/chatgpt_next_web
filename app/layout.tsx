@@ -11,6 +11,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./lib/auth";
 import { Providers } from "./providers";
 import UserNav from "./components/user-nav";
+import { SystemInitializer } from "./components/system-init";
 
 export const metadata: Metadata = {
   title: "NextChat",
@@ -56,6 +57,9 @@ export default async function RootLayout({
       </head>
       <body>
         <Providers session={session}>
+          {/* 系统初始化组件 */}
+          <SystemInitializer />
+          
           {/* 用户登录状态导航 */}
           <div className="fixed top-2 right-2 z-50">
             <UserNav />
