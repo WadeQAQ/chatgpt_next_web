@@ -239,6 +239,16 @@ const cn = {
       Cancel: "取消",
     },
 
+    HistoryCount: {
+      Title: "附带消息数",
+      SubTitle: "每次请求附带的历史消息数",
+    },
+    
+    CompressThreshold: {
+      Title: "历史消息压缩阈值",
+      SubTitle: "当未压缩的历史消息超过该值时，将进行压缩",
+    },
+
     Danger: {
       Reset: {
         Title: "重置所有设置",
